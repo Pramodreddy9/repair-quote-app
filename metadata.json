@@ -1,0 +1,6 @@
+{
+  "name": "Repair Quote Decoder",
+  "description": "Decode car and motorcycle repair quotes in India with interactive, animated vehicle part diagrams and sample INR prices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

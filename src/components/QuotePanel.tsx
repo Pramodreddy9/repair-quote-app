@@ -43,6 +43,8 @@ interface QuotePanelProps {
   isSignedOut: boolean;
   onContinueAsGuest: () => void;
   chatMessages: ChatMessage[];
+  isChatLoading: boolean;
+  chatError: string | null;
   onSendChatQuestion: (question: string) => void;
 }
 
@@ -63,6 +65,8 @@ export function QuotePanel({
   isSignedOut,
   onContinueAsGuest,
   chatMessages,
+  isChatLoading,
+  chatError,
   onSendChatQuestion,
 }: QuotePanelProps) {
   const [chatInput, setChatInput] = useState('');
@@ -415,15 +419,16 @@ export function QuotePanel({
           <span className="text-xs text-[#64748B]">Try sample question:</span>
           <button
             type="button"
+            disabled={isChatLoading}
             onClick={() => onSendChatQuestion(SAMPLE_CHAT_QUESTION)}
-            className="min-h-[36px] px-3 py-1.5 text-xs font-medium text-[#1D4ED8] bg-[#EFF6FF] hover:bg-[#DBEAFE] border border-[#BFDBFE] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+            className="min-h-[36px] px-3 py-1.5 text-xs font-medium text-[#1D4ED8] bg-[#EFF6FF] hover:bg-[#DBEAFE] disabled:opacity-60 border border-[#BFDBFE] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
           >
             {SAMPLE_CHAT_QUESTION}
           </button>
         </div>
 
         {/* Chat Thread */}
-        {chatMessages.length > 0 && (
+        {(chatMessages.length > 0 || isChatLoading) && (
           <div className="flex flex-col gap-2 max-h-48 overflow-y-auto rounded-lg bg-[#FAFBFD] border border-[#EEF1F5] p-3">
             {chatMessages.map((msg) => (
               <div
@@ -437,6 +442,22 @@ export function QuotePanel({
                 {msg.text}
               </div>
             ))}
+            {isChatLoading && (
+              <div className="text-xs px-3 py-2 rounded-lg self-start bg-white border border-[#E2E6EC] text-[#64748B]">
+                Getting reply...
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Chat Error Banner */}
+        {chatError && (
+          <div
+            role="alert"
+            className="rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 flex items-start gap-2 text-xs text-[#991B1B]"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#DC2626]" aria-hidden="true" />
+            <span className="break-words">{chatError}</span>
           </div>
         )}
 
@@ -448,18 +469,20 @@ export function QuotePanel({
           <input
             id="demo-chat-input"
             type="text"
+            disabled={isChatLoading}
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="Ask about this quote..."
-            className="flex-1 min-w-0 min-h-[40px] px-3 py-2 text-sm bg-[#FAFBFD] border border-[#D1D5DB] rounded-lg text-[#111827] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#1D4ED8] focus:bg-white"
+            className="flex-1 min-w-0 min-h-[40px] px-3 py-2 text-sm bg-[#FAFBFD] border border-[#D1D5DB] rounded-lg text-[#111827] placeholder:text-[#94A3B8] disabled:opacity-60 focus:outline-none focus:border-[#1D4ED8] focus:bg-white"
           />
           <button
             type="submit"
+            disabled={isChatLoading}
             aria-label="Send message"
-            className="min-h-[40px] px-3.5 py-2 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-[#111827] hover:bg-[#1E293B] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+            className="min-h-[40px] px-3.5 py-2 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-[#111827] hover:bg-[#1E293B] disabled:bg-[#94A3B8] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
           >
             <Send className="w-3.5 h-3.5" aria-hidden="true" />
-            Send
+            {isChatLoading ? 'Sending...' : 'Send'}
           </button>
         </form>
       </section>

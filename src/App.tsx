@@ -5,7 +5,6 @@ import {AuthModal} from './components/AuthModal';
 import {MyProfilePage} from './components/MyProfilePage';
 import {QuotePanel} from './components/QuotePanel';
 import {VehicleDiagram} from './components/VehicleDiagram';
-import {getDemoChatReply} from './data/partsCatalog';
 import {usePrefersReducedMotion} from './hooks/usePrefersReducedMotion';
 import {
   consumeUrlConfirmationIfPresent,
@@ -50,6 +49,8 @@ export default function App() {
   });
   const [animationKey, setAnimationKey] = useState(0);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSignedOut, setIsSignedOut] = useState(false);
@@ -362,22 +363,86 @@ export default function App() {
     setAnimationKey((prev) => prev + 1);
   };
 
-  const handleSendChatQuestion = (question: string) => {
-    const reply = getDemoChatReply(question);
+  const handleSendChatQuestion = async (question: string) => {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) {
+      return;
+    }
+
+    setChatError(null);
+
+    if (isSignedOut || !supabase) {
+      setChatError('Please sign in to use chat.');
+      return;
+    }
+
+    const {data: sessionData, error: sessionError} =
+      await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (sessionError || !accessToken) {
+      setChatError('Please sign in to use chat.');
+      return;
+    }
+
     const timestamp = Date.now();
     setChatMessages((prev) => [
       ...prev,
       {
         id: `user-${timestamp}-${prev.length}`,
         sender: 'user',
-        text: question,
-      },
-      {
-        id: `assistant-${timestamp}-${prev.length + 1}`,
-        sender: 'assistant',
-        text: reply,
+        text: trimmedQuestion,
       },
     ]);
+    setIsChatLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          message: trimmedQuestion,
+          vehicle_type: vehicle,
+        }),
+      });
+
+      let payload: {reply?: unknown; error?: unknown} | null = null;
+      try {
+        payload = (await response.json()) as {reply?: unknown; error?: unknown};
+      } catch {
+        payload = null;
+      }
+
+      if (
+        response.ok &&
+        payload &&
+        payload.error === null &&
+        typeof payload.reply === 'string'
+      ) {
+        const replyText = payload.reply;
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}-${prev.length}`,
+            sender: 'assistant',
+            text: replyText,
+          },
+        ]);
+      } else {
+        const errorMessage =
+          typeof payload?.error === 'string' && payload.error.trim()
+            ? payload.error
+            : `Unable to get a reply (status ${response.status}).`;
+        setChatError(errorMessage);
+      }
+    } catch {
+      setChatError('Unable to reach the chat service. Please try again.');
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   const openAuthModal = (mode: AuthModalMode) => {
@@ -392,6 +457,7 @@ export default function App() {
     setIsSignedOut(false);
     setNeedsPasswordCompletion(false);
     setActiveView('decoder');
+    setChatError(null);
 
     editedBeforeLoadRef.current = {motorcycle: false, car: false};
     editGenerationRef.current = {motorcycle: 0, car: 0};
@@ -412,6 +478,7 @@ export default function App() {
     }
     setIsSignedOut(false);
     setNeedsPasswordCompletion(false);
+    setChatError(null);
     if (upgradedUser?.id) {
       await applyLoadedQuotesForUser(upgradedUser.id, {
         preservePreLoadEdits: true,
@@ -420,6 +487,7 @@ export default function App() {
   };
 
   const handleContinueAsGuest = async () => {
+    setChatError(null);
     if (currentUser?.is_anonymous && !isSignedOut) {
       setActiveView('decoder');
       return;
@@ -450,6 +518,8 @@ export default function App() {
       setIsSignedOut(true);
       setNeedsPasswordCompletion(false);
       setActiveView('decoder');
+      setChatError(null);
+      setChatMessages([]);
 
       // Clear previous customer's quotes from the screen while keeping animations working
       editedBeforeLoadRef.current = {motorcycle: false, car: false};
@@ -607,7 +677,9 @@ export default function App() {
                 isSignedOut={isSignedOut}
                 onContinueAsGuest={() => void handleContinueAsGuest()}
                 chatMessages={chatMessages}
-                onSendChatQuestion={handleSendChatQuestion}
+                isChatLoading={isChatLoading}
+                chatError={chatError}
+                onSendChatQuestion={(q) => void handleSendChatQuestion(q)}
               />
             </div>
           </div>

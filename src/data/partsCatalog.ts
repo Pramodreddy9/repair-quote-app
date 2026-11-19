@@ -76,18 +76,4 @@ export function formatINR(amount: number): string {
 }
 
 export const SAMPLE_CHAT_QUESTION = 'Does this include fitting?';
-export const SAMPLE_CHAT_REPLY =
-  'Labour is not specified in this quote. Ask the workshop whether fitting is included.';
-export const DEMO_CHAT_FALLBACK_REPLY =
-  'Live chat will be connected later. For now, try the sample question “Does this include fitting?” above.';
 
-export function getDemoChatReply(input: string): string {
-  const normalized = input.trim().toLowerCase().replace(/[?!.]+$/g, '');
-  if (
-    normalized === 'does this include fitting' ||
-    normalized.includes('include fitting')
-  ) {
-    return SAMPLE_CHAT_REPLY;
-  }
-  return DEMO_CHAT_FALLBACK_REPLY;
-}

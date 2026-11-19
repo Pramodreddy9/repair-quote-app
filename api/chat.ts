@@ -155,7 +155,7 @@ export default async function handler(
       return;
     }
 
-    if (upstreamData && upstreamData.error !== null && upstreamData.error !== undefined) {
+    if (upstreamData?.error) {
       const explicitError =
         typeof upstreamData.error === 'string' && upstreamData.error.trim()
           ? upstreamData.error.trim()

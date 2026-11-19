@@ -676,6 +676,7 @@ export default function App() {
                 onSaveQuote={() => void handleSaveQuote()}
                 isSignedOut={isSignedOut}
                 onContinueAsGuest={() => void handleContinueAsGuest()}
+                onOpenSignIn={() => openAuthModal('signin')}
                 chatMessages={chatMessages}
                 isChatLoading={isChatLoading}
                 chatError={chatError}

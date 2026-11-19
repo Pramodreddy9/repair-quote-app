@@ -42,6 +42,7 @@ interface QuotePanelProps {
   onSaveQuote: () => void;
   isSignedOut: boolean;
   onContinueAsGuest: () => void;
+  onOpenSignIn: () => void;
   chatMessages: ChatMessage[];
   isChatLoading: boolean;
   chatError: string | null;
@@ -64,6 +65,7 @@ export function QuotePanel({
   onSaveQuote,
   isSignedOut,
   onContinueAsGuest,
+  onOpenSignIn,
   chatMessages,
   isChatLoading,
   chatError,
@@ -454,10 +456,21 @@ export function QuotePanel({
         {chatError && (
           <div
             role="alert"
-            className="rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 flex items-start gap-2 text-xs text-[#991B1B]"
+            className="rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-[#991B1B]"
           >
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#DC2626]" aria-hidden="true" />
-            <span className="break-words">{chatError}</span>
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#DC2626]" aria-hidden="true" />
+              <span className="break-words">{chatError}</span>
+            </div>
+            {chatError === 'Please sign in to use chat.' && (
+              <button
+                type="button"
+                onClick={onOpenSignIn}
+                className="px-2.5 py-1.5 text-xs font-semibold text-[#991B1B] bg-white border border-[#FCA5A5] hover:bg-[#FEE2E2] rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Sign in
+              </button>
+            )}
           </div>
         )}
 
